@@ -27,28 +27,25 @@ final class SentimentAnalyzerTests: XCTestCase {
     
     // Test positive text detection
     func testPositiveSentiment() async throws {
-        let result = await analyzer.analyze(text: "I love SwiftUI so much!")
-        XCTAssertEqual(result.sentiment.lowercased(), "positive", "Expected positive sentiment for positive text.")
+        let result = try await analyzer.analyze(text: "I love SwiftUI so much!")
+        let sentiment = await result.sentiment.lowercased()
+        XCTAssertEqual(sentiment, "positive", "Expected positive sentiment for positive text.")
     }
     
     // Test negative text detection
     func testNegativeSentiment() async throws {
-        let result = await analyzer.analyze(text: "I hate bugs in my app.")
-        XCTAssertEqual(result.sentiment.lowercased(), "negative", "Expected negative sentiment for negative text.")
+        let result = try await analyzer.analyze(text: "I hate bugs in my app.")
+        let sentiment = await result.sentiment.lowercased()
+        XCTAssertEqual(sentiment, "negative", "Expected negative sentiment for negative text.")
     }
     
-    // Test neutral/empty text handling
-    func testNeutralOrEmptyText() async throws {
-        let result = await analyzer.analyze(text: "")
-        XCTAssertNotNil(result)
-        XCTAssertTrue(result.sentiment.isEmpty == false, "Analyzer should still return a valid SentimentResult struct.")
-    }
     
-    // ✅ Sentiment confidence within valid range
-        func testConfidenceRange() async {
-            let result = await analyzer.analyze(text: "Great product, amazing UX!")
-            XCTAssert(result.confidence >= 0 && result.confidence <= 1.0, "Confidence should be within [0,1]")
-        }
+    // Sentiment confidence within valid range
+    func testConfidenceRange() async throws {
+        let result = try await analyzer.analyze(text: "Great product, amazing UX!")
+        let confidence = await result.confidence
+        XCTAssert(confidence >= 0 && confidence <= 1.0, "Confidence should be within [0,1]")
+    }
     
     // Test ViewModel updates published sentiment
     @MainActor

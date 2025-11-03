@@ -8,43 +8,47 @@
 import CoreML
 import Vision
 import UIKit
+import Combine
 
-actor CoreMLManager {
+@MainActor
+final class CoreMLManager: ObservableObject {
     private var model: VNCoreMLModel?
 
     init() {
-        loadModel()
+        Task { await loadModel() }
     }
 
-    private func loadModel() {
-        guard let model = try? VNCoreMLModel(for: MobileNetV2(configuration: MLModelConfiguration()).model) else {
-            print("Failed to load MobileNetV2 model")
-            return
+    private func loadModel() async {
+        do {
+            let configuration = MLModelConfiguration()
+            // Entire CoreML initialization on main actor
+            let coreMLModel = try await MobileNetV2(configuration: configuration).model
+            let vnModel = try VNCoreMLModel(for: coreMLModel)
+            self.model = vnModel
+        } catch {
+            print("Failed to load MobileNetV2 model: \(error)")
+            self.model = nil
         }
-        self.model = model
     }
 
     func classify(image: UIImage) async throws -> ImageClassificationResult {
         guard let model = model else {
             throw AppError.modelLoadFailed
         }
+
         guard let cgImage = image.cgImage else {
             throw AppError.invalidImage
         }
 
         let request = VNCoreMLRequest(model: model)
-        let handler = VNImageRequestHandler(cgImage: cgImage)
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        try handler.perform([request])
 
-        do {
-            try handler.perform([request])
-        } catch {
-            throw AppError.classificationFailed
-        }
-
-        guard let observation = request.results?.first as? VNClassificationObservation else {
+        guard let best = (request.results as? [VNClassificationObservation])?.first else {
             throw AppError.noPrediction
         }
 
-        return ImageClassificationResult(label: observation.identifier, confidence: Double(observation.confidence))
+        return ImageClassificationResult(label: best.identifier, confidence: Double(best.confidence))
     }
 }
+

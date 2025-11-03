@@ -146,12 +146,14 @@ final class ImageClassifierTests: XCTestCase {
 
     func testConcurrentClassifications() async throws {
         guard let image = UIImage(systemName: "photo") else { return }
+        
+        let manager = self.manager!
 
         await withTaskGroup(of: Void.self) { group in
             for i in 1...3 {
                 group.addTask {
                     do {
-                        _ = try await self.manager.classify(image: image)
+                        _ = try await manager.classify(image: image)
                         print("Classification \(i) done")
                     } catch {
                         print("Classification \(i) failed: \(error.localizedDescription)")

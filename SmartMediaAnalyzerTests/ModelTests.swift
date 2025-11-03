@@ -8,6 +8,7 @@
 import XCTest
 @testable import SmartMediaAnalyzer
 
+@MainActor
 final class ModelTests: XCTestCase {
     
 
@@ -52,3 +53,4 @@ final class ModelTests: XCTestCase {
         XCTAssertNotEqual(positive.confidence, negative.confidence)
     }
 }
+

@@ -13,6 +13,7 @@ import Combine
 final class SentimentViewModel: ObservableObject {
     @Published var sentiment: SentimentResult?
     @Published var textInput: String = ""
+    @Published var error: Error?
 
     private let analyzer = SentimentAnalyzer()
 
@@ -25,7 +26,13 @@ final class SentimentViewModel: ObservableObject {
 
     func analyzeTextAsync(input: String? = nil) async {
         let inputToUse = input ?? textInput
-        let result = await analyzer.analyze(text: inputToUse)
-        sentiment = result
+        do {
+            let result = try await analyzer.analyze(text: inputToUse)
+            sentiment = result
+            error = nil
+        } catch {
+            self.error = error
+            sentiment = nil
+        }
     }
 }
